@@ -1,0 +1,310 @@
+// Binary digits structure definition
+template <class T>
+struct binary_digits 
+: std::enable_if<
+  std::is_integral<T>::value && std::is_unsigned<T>::value,
+  std::integral_constant<std::size_t, std::numeric_limits<T>::digits>
+>::type
+{};
+
+template <class T>
+constexpr std::size t binary_digits_v = binary digits<T>::value;
+
+// Bit value class definition
+class bit_value
+{public:
+    
+  // Types
+  using size_type = std::size_t;
+    
+  // Lifecycle
+  bit_value() noexcept = default;
+  template <class T> 
+  constexpr bit_value(bit_reference<T> val) noexcept;
+  template <class UIntType>
+  explicit constexpr bit_value(UIntType val) noexcept;
+  template <class UIntType> 
+  constexpr bit_value(UIntType val, size_type pos);
+    
+  // Assignment
+  template <class T> 
+  bit_value& operator=(bit_reference<T> val) noexcept;
+  template <class UIntType>
+  bit_value& assign(UIntType val) noexcept;
+  template <class UIntType> 
+  bit_value& assign(UIntType val, size_type pos);
+  
+  // Bitwise assignment
+  bit_value& operator&=(bit_value other) noexcept;
+  bit_value& operator|=(bit_value other) noexcept;
+  bit_value& operator^=(bit_value other) noexcept;
+
+  // Conversion
+  explicit constexpr operator bool() const noexcept;
+
+  // Swap members
+  void swap(bit_value& other);
+  template <class T> 
+  void swap(bit_reference<T> other);
+
+  // Bit manipulation
+  void set(bool b) noexcept;
+  void set() noexcept;
+  void reset() noexcept;
+  void flip() noexcept;
+};
+
+// Bitwise operators
+constexpr bit_value operator&(bit_value lhs, bit_value rhs) noexcept;
+constexpr bit_value operator|(bit_value lhs, bit_value rhs) noexcept;
+constexpr bit_value operator^(bit_value lhs, bit_value rhs) noexcept;
+
+// Comparison operators
+constexpr bool operator==(bit_value lhs, bit_value rhs) noexcept;
+constexpr bool operator!=(bit_value lhs, bit_value rhs) noexcept;
+constexpr bool operator<(bit_value lhs, bit_value rhs) noexcept;
+constexpr bool operator<=(bit_value lhs, bit_value rhs) noexcept;
+constexpr bool operator>(bit_value lhs, bit_value rhs) noexcept;
+constexpr bool operator>=(bit_value lhs, bit_value rhs) noexcept;
+
+// Stream functions
+template <class CharT, class Traits>
+std::basic_istream<CharT, Traits>& operator>>(
+  std::basic_istream<CharT, Traits>& is,
+  bit_value& x
+);
+template <class CharT, class Traits>
+std::basic_ostream<CharT, Traits>& operator<<(
+  std::basic_ostream<CharT, Traits>& os,
+  bit_value x
+);
+
+// Constants
+static constexpr bit_value zero_bit(0U);
+static constexpr bit_value one_bit(1U);
+
+
+
+// Bit reference class definition
+template <class UIntType>
+class bit_reference
+{public:
+    
+  // Types
+  using underlying_type = UIntType;
+  using size_type = std::size_t;
+
+  // Lifecycle
+  template <class T> 
+  constexpr bit_reference(const bit_reference<T>& other) noexcept;
+  explicit constexpr bit_reference(underlying_type& ref) noexcept;
+  constexpr bit_reference(underlying_type& ref, size_type pos);
+
+  // Assignment
+  bit_reference& operator=(const bit_reference& other) noexcept;
+  template <class T> 
+  bit_reference& operator=(const bit_reference<T>& other) noexcept;
+  bit_reference& operator=(bit_value val) noexcept;
+  bit_reference& assign(underlying_type val) noexcept;
+  bit_reference& assign(underlying_type val, size_type pos);
+
+  // Bitwise assignment
+  bit_reference& operator&=(bit_value other) noexcept;
+  bit_reference& operator|=(bit_value other) noexcept;
+  bit_reference& operator^=(bit_value other) noexcept;
+    
+  // Conversion
+  explicit constexpr operator bool() const noexcept;
+
+  // Access
+  constexpr bit_pointer<UIntType> operator&() const noexcept;
+    
+  // Swap members
+  template <class T> 
+  void swap(bit_reference<T> other);
+  void swap(bit_value& other);
+
+  // Bit manipulation
+  void set(bool b) noexcept;
+  void set() noexcept;
+  void reset() noexcept;
+  void flip() noexcept;
+
+  // Underlying details
+  constexpr underlying_type* address() const noexcept;
+  constexpr size_type position() const noexcept;
+  constexpr underlying_type mask() const noexcept;
+};
+
+// Swap
+template <class T, class U>
+void swap(bit_reference<T> lhs, bit_reference<U> rhs) noexcept;
+template <class T>
+void swap(bit_reference<T> lhs, bit_value& rhs) noexcept;
+template <class U>
+void swap(bit_value& lhs, bit_reference<U> rhs) noexcept;
+
+// Stream functions
+template <class CharT, class Traits, class T>
+std::basic_istream<CharT, Traits>& operator>>(
+  std::basic_istream<CharT, Traits>& is,
+  bit_reference<T>& x
+);
+template <class CharT, class Traits, class T>
+std::basic_ostream<CharT, Traits>& operator<<(
+  std::basic_ostream<CharT, Traits>& os,
+  bit_reference<T> x
+);
+
+
+// Bit pointer class definition
+template <class UIntType>
+class bit_pointer
+{public:
+    
+  // Types
+  using underlying_type = UIntType;
+  using size_type = std::size_t;
+  using difference_type = /* Implementation defined, at least std::ptrdiff_t */;
+
+  // Lifecycle
+  bit_pointer() noexcept = default;
+  template <class T> 
+  constexpr bit_pointer(const bit_pointer<T>& other) noexcept;
+  constexpr bit_pointer(std::nullptr_t) noexcept;
+  explicit constexpr bit_pointer(underlying_type* ptr) noexcept;
+  constexpr bit_pointer(underlying_type* ptr, size_type pos);
+    
+  // Assignment
+  bit_pointer& operator=(std::nullptr_t) noexcept;
+  bit_pointer& operator=(const bit_pointer& other) noexcept;
+  template <class T> 
+  bit_pointer& operator=(const bit_pointer<T>& other) noexcept;
+    
+  // Conversion
+  explicit constexpr operator bool() const noexcept;
+
+  // Access
+  constexpr bit_reference<UIntType> operator*() const noexcept;
+  constexpr bit_reference<UIntType>* operator->() const noexcept;
+  constexpr bit_reference<UIntType> operator[](difference_type n) const;
+    
+  // Increment and decrement operators
+  bit_pointer& operator++();
+  bit_pointer& operator--();
+  bit_pointer operator++(int);
+  bit_pointer operator--(int);
+  constexpr bit_pointer operator+(difference_type n) const;
+  constexpr bit_pointer operator-(difference_type n) const;
+  bit_pointer& operator+=(difference_type n);
+  bit_pointer& operator-=(difference_type n);
+};
+
+// Non-member arithmetic operators
+template <class T>
+constexpr bit_pointer<T> operator+(
+  typename bit_pointer<T>::difference_type n,
+  bit_pointer<T> x
+);
+template <class T, class U>
+constexpr typename std::common_type<
+  typename bit_pointer<T>::difference_type,
+  typename bit_pointer<U>::difference_type
+>::type operator-(
+  bit_pointer<T> lhs,
+  bit_pointer<U> rhs
+);
+
+// Comparison operators
+template <class T, class U>
+constexpr bool operator==(bit_pointer<T> lhs, bit_pointer<U> rhs) noexcept;
+template <class T, class U>
+constexpr bool operator!=(bit_pointer<T> lhs, bit_pointer<U> rhs) noexcept;
+template <class T, class U>
+constexpr bool operator<(bit_pointer<T> lhs, bit_pointer<U> rhs) noexcept;
+template <class T, class U>
+constexpr bool operator<=(bit_pointer<T> lhs, bit_pointer<U> rhs) noexcept;
+template <class T, class U>
+constexpr bool operator>(bit_pointer<T> lhs, bit_pointer<U> rhs) noexcept;
+template <class T, class U>
+constexpr bool operator>=(bit_pointer<T> lhs, bit_pointer<U> rhs) noexcept;
+
+
+// Bit iterator class definition
+template <class Iterator>
+class bit_iterator
+{public:
+  
+  // Types
+  using iterator_type = Iterator;
+  using underlying_type = typename _cv_iterator_traits<Iterator>::value_type;
+  using iterator_category = typename std::iterator_traits<Iterator>::iterator_category;
+  using value_type = bit_value;
+  using difference_type = /* Implementation defined, at least std::ptrdiff_t */;
+  using pointer = bit_pointer<underlying_type>;
+  using reference = bit_reference<underlying_type>;
+  using size_type = std::size_t;
+
+  // Lifecycle
+  constexpr bit_iterator();
+  template <class T> 
+  constexpr bit_iterator(const bit_iterator<T>& other);
+  explicit constexpr bit_iterator(iterator_type i);
+  constexpr bit_iterator(iterator_type i, size_type pos);
+
+  // Assignment
+  template <class T>
+  bit_iterator& operator=(const bit_iterator<T>& other);
+
+  // Access
+  constexpr reference operator*() const noexcept;
+  constexpr pointer operator->() const noexcept;
+  constexpr reference operator[](difference_type n) const;
+
+  // Increment and decrement operators
+  bit_iterator& operator++();
+  bit_iterator& operator--();
+  bit_iterator operator++(int);
+  bit_iterator operator--(int);
+  constexpr bit_iterator operator+(difference_type n) const;
+  constexpr bit_iterator operator-(difference_type n) const;
+  bit_iterator& operator+=(difference_type n);
+  bit_iterator& operator-=(difference_type n);
+
+  // Underlying details
+  constexpr iterator_type base() const;
+  constexpr size_type position() const noexcept;
+  constexpr underlying_type mask() const noexcept;
+};
+
+// Non-member arithmetic operators
+template <class T>
+constexpr bit_iterator<T> operator+(
+  typename bit_iterator<T>::difference_type n,
+  const bit_iterator<T>& i
+);
+template <class T, class U>
+constexpr typename std::common_type<
+  typename bit_iterator<T>::difference_type,
+  typename bit_iterator<U>::difference_type
+>::type operator-(
+  const bit_iterator<T>& lhs,
+  const bit_iterator<U>& rhs
+);
+
+// Comparison operators
+template <class T, class U>
+constexpr bool operator==(const bit_iterator<T>& lhs, const bit_iterator<U>& rhs);
+template <class T, class U>
+constexpr bool operator!=(const bit_iterator<T>& lhs, const bit_iterator<U>& rhs);
+template <class T, class U>
+constexpr bool operator<(const bit_iterator<T>& lhs, const bit_iterator<U>& rhs);
+template <class T, class U>
+constexpr bool operator<=(const bit_iterator<T>& lhs, const bit_iterator<U>& rhs);
+template <class T, class U>
+constexpr bool operator>(const bit_iterator<T>& lhs, const bit_iterator<U>& rhs);
+template <class T, class U>
+constexpr bool operator>=(const bit_iterator<T>& lhs, const bit_iterator<U>& rhs);
+
+
+
